@@ -10,7 +10,7 @@ from simulation.clock import SimClock
 from simulation.building import Building
 from simulation.passenger import Passenger
 from metrics.collector import MetricsCollector
-from algorithms import ALGORITHMS, FCFSDispatcher, SCANDispatcher, LOOKDispatcher
+from algorithms import ALGORITHMS
 from gui.building_view import BuildingView
 from gui.control_panel import ControlPanel
 from gui.metrics_panel import MetricsPanel
@@ -24,11 +24,11 @@ PANEL_W = 340
 BUILD_W = WIN_W - PANEL_W
 BUILD_H = WIN_H - METRICS_H
 
-# --- Automatyczne generowanie pasażerów ---
-AUTO_SPAWN_INTERVAL = 3.0  # sekundy symulacji między pasażerami
+AUTO_SPAWN_INTERVAL = 3.0  
 
 
 class AutoSpawner:
+
     def __init__(self) -> None:
         self._timer = 0.0
         self.interval = AUTO_SPAWN_INTERVAL
@@ -73,11 +73,13 @@ def main() -> None:
     dispatcher = make_dispatcher(current_algo, 10)
     building = Building(
         num_floors=10,
-        num_elevators=3,
+        num_elevators=2,
         dispatcher=dispatcher,
         collector=collector,
     )
     auto_spawner = AutoSpawner()
+    # Lista pasażerów ze scenariusza czekająca na arrival_time
+    scenario_schedule: list[dict] = []
 
     # Rects
     build_rect = pygame.Rect(0, 0, BUILD_W, BUILD_H)
@@ -93,14 +95,29 @@ def main() -> None:
         dispatcher = make_dispatcher(name, building.num_floors)
         building.dispatcher = dispatcher
 
-    def on_rebuild(num_floors: int, num_elevators: int) -> None:
+    def on_rebuild(num_floors: int) -> None:
         nonlocal dispatcher
         dispatcher = make_dispatcher(current_algo, num_floors)
         building.dispatcher = dispatcher
         building.collector = collector
-        building.rebuild(num_floors, num_elevators)
+        building.rebuild(num_floors, 2)
         collector.reset()
         sim_clock.reset()
+
+    def on_load_scenario(scenario: dict) -> None:
+        nonlocal dispatcher
+        num_floors = scenario["num_floors"]
+        dispatcher = make_dispatcher(current_algo, num_floors)
+        building.dispatcher = dispatcher
+        building.collector = collector
+        building.rebuild(num_floors, 2)
+        collector.reset()
+        sim_clock.reset()
+        # Wypełnij harmonogram — pasażerowie pojawiają się w arrival_time
+        scenario_schedule.clear()
+        scenario_schedule.extend(
+            sorted(scenario["passengers"], key=lambda p: p["arrival_time"])
+        )
 
     def on_add_passenger(origin: int, dest: int) -> None:
         p = Passenger(origin_floor=origin, destination_floor=dest, arrival_time=sim_clock.sim_time)
@@ -113,13 +130,14 @@ def main() -> None:
         building.reset()
         collector.reset()
         sim_clock.reset()
+        scenario_schedule.clear()
 
     control_panel = ControlPanel(
         rect=panel_rect,
         sim_clock=sim_clock,
         on_algo_change=on_algo_change,
         on_rebuild=on_rebuild,
-        on_add_passenger=on_add_passenger,
+        on_load_scenario=on_load_scenario,
         on_reset=on_reset,
     )
     metrics_panel = MetricsPanel(metrics_rect, collector)
@@ -141,6 +159,15 @@ def main() -> None:
             building_view.handle_event(event, on_add_passenger)
 
         # --- Update ---
+        # Pasażerowie ze scenariusza pojawiają się w swoim arrival_time
+        while scenario_schedule and scenario_schedule[0]["arrival_time"] <= sim_clock.sim_time:
+            entry = scenario_schedule.pop(0)
+            building.add_passenger(Passenger(
+                origin_floor=entry["origin"],
+                destination_floor=entry["destination"],
+                arrival_time=entry["arrival_time"],
+            ))
+
         if control_panel.auto_spawn and sim_dt > 0:
             auto_spawner.update(sim_dt, sim_clock.sim_time, building)
 

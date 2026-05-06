@@ -45,7 +45,6 @@ class Building:
     def add_passenger(self, p: Passenger) -> None:
         self.floors[p.origin_floor].add_passenger(p)
         self.collector.record_arrival(p)
-        # Natychmiast powiadom dispatcher
         self.dispatcher.on_new_request(self.elevators, self.floors, p)
 
     def update(self, dt: float, sim_time: float) -> None:

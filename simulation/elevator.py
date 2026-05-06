@@ -112,23 +112,16 @@ class Elevator:
         floor = self.current_floor
         floor_obj = building.floors[floor]
 
-        # Wysiadanie
+        # Wysiadanie — wszyscy których cel to to piętro
         exiting = [p for p in self.passengers if p.destination_floor == floor]
         for p in exiting:
             p.exit_time = sim_time
             self.passengers.remove(p)
             building.collector.record_exit(p)
 
-        # Wsiadanie — pasażerowie jadący w kierunku windy
-        if self.direction >= 0:
-            waiting = floor_obj.waiting_up
-        else:
-            waiting = floor_obj.waiting_down
-
-        # Winda stojąca (wszystkich kierunków)
-        if not self.stop_queue or len(self.stop_queue) == 0:
-            waiting = floor_obj.waiting_up + floor_obj.waiting_down
-
+        # Wsiadanie — wszyscy czekający na tym piętrze.
+        # Dispatcher celowo posłał tutaj windę — bierzemy każdego (obie strony).
+        waiting = floor_obj.waiting_up + floor_obj.waiting_down
         boarded = []
         for p in list(waiting):
             if len(self.passengers) >= MAX_CAPACITY:
@@ -136,7 +129,6 @@ class Elevator:
             p.board_time = sim_time
             self.passengers.append(p)
             boarded.append(p)
-            # Dodaj piętro docelowe do kolejki
             self._add_stop(p.destination_floor)
 
         for p in boarded:
@@ -146,14 +138,12 @@ class Elevator:
                 floor_obj.waiting_down.remove(p)
 
     def _add_stop(self, floor: int) -> None:
-        """Dodaje piętro do kolejki jeśli jeszcze go tam nie ma."""
+        """Dodaje piętro do kolejki i sortuje nearest-first od aktualnej pozycji."""
         if floor not in self.stop_queue:
             self.stop_queue.append(floor)
-            # Sortuj kolejkę według kierunku jazdy
-            if self.direction >= 0:
-                self.stop_queue = deque(sorted(self.stop_queue))
-            else:
-                self.stop_queue = deque(sorted(self.stop_queue, reverse=True))
+            # Sortuj rosnąco — kierunek ustali _update_idle na podstawie pierwszego elementu
+            pos = self.position
+            self.stop_queue = deque(sorted(self.stop_queue, key=lambda f: abs(f - pos)))
 
     def _transition(self, new_state: ElevatorState) -> None:
         self.state = new_state

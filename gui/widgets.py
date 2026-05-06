@@ -140,21 +140,24 @@ class Dropdown:
         return rects
 
     def draw(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
+        """Rysuje tylko zamknięty przycisk. Listę rysuj osobno przez draw_overlay()."""
         pygame.draw.rect(surface, colors.BTN, self.rect, border_radius=6)
         pygame.draw.rect(surface, colors.ACCENT, self.rect, 1, border_radius=6)
         text = font.render(self.value, True, colors.BTN_TEXT)
         surface.blit(text, text.get_rect(center=self.rect.center))
-        # Arrow
         arrow = font.render("▼" if not self._open else "▲", True, colors.TEXT_DIM)
         surface.blit(arrow, (self.rect.right - 22, self.rect.centery - 8))
 
-        if self._open:
-            for i, (item_rect, opt) in enumerate(zip(self._item_rects(), self.options)):
-                color = colors.BTN_HOVER if i == self._hovered_item else colors.BTN
-                pygame.draw.rect(surface, color, item_rect)
-                pygame.draw.rect(surface, colors.ACCENT, item_rect, 1)
-                t = font.render(opt, True, colors.BTN_TEXT)
-                surface.blit(t, t.get_rect(center=item_rect.center))
+    def draw_overlay(self, surface: pygame.Surface, font: pygame.font.Font) -> None:
+        """Rysuje rozwiniętą listę na wierzchu wszystkich innych elementów."""
+        if not self._open:
+            return
+        for i, (item_rect, opt) in enumerate(zip(self._item_rects(), self.options)):
+            color = colors.BTN_HOVER if i == self._hovered_item else colors.BTN
+            pygame.draw.rect(surface, color, item_rect)
+            pygame.draw.rect(surface, colors.ACCENT, item_rect, 1)
+            t = font.render(opt, True, colors.BTN_TEXT)
+            surface.blit(t, t.get_rect(center=item_rect.center))
 
 
 class SpinBox:

@@ -1,0 +1,25 @@
+{
+  "name": "Blok mieszkalny",
+  "description": "Typowy ruch w bloku — część lokatorów zjeżdża na dół (wychodzi z domu), część wjeżdża na górę (wraca do domu). Ruch w obu kierunkach.",
+  "num_floors": 10,
+  "passengers": [
+    {"origin": 8, "destination": 0, "arrival_time": 0.0},
+    {"origin": 7, "destination": 1, "arrival_time": 1.0},
+    {"origin": 0, "destination": 5, "arrival_time": 3.0},
+    {"origin": 9, "destination": 0, "arrival_time": 4.0},
+    {"origin": 3, "destination": 8, "arrival_time": 7.0},
+    {"origin": 6, "destination": 0, "arrival_time": 8.0},
+    {"origin": 0, "destination": 7, "arrival_time": 11.0},
+    {"origin": 5, "destination": 1, "arrival_time": 12.0},
+    {"origin": 2, "destination": 9, "arrival_time": 15.0},
+    {"origin": 8, "destination": 2, "arrival_time": 16.0},
+    {"origin": 0, "destination": 4, "arrival_time": 19.0},
+    {"origin": 7, "destination": 0, "arrival_time": 20.0},
+    {"origin": 1, "destination": 6, "arrival_time": 23.0},
+    {"origin": 9, "destination": 1, "arrival_time": 24.0},
+    {"origin": 4, "destination": 0, "arrival_time": 27.0},
+    {"origin": 0, "destination": 8, "arrival_time": 28.0},
+    {"origin": 6, "destination": 3, "arrival_time": 31.0},
+    {"origin": 2, "destination": 7, "arrival_time": 32.0}
+  ]
+}
